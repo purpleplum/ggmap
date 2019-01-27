@@ -40,7 +40,7 @@
 #' @return a ggmap object (a classed raster object with a bounding box attribute)
 #' @author David Kahle \email{david.kahle@@gmail.com}
 #' @seealso \url{http://www.openstreetmap.org/}, \code{\link{ggmap}}
-#' @export
+#' 
 #' @examples
 #'
 #' # get_openstreetmap(urlonly = TRUE)
