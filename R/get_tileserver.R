@@ -198,6 +198,7 @@ tile_stitch <- function(tiles){
 #' @param zoom Zoom level of map
 #' @param ... Further arguments passed to get_tilemap
 #' @export
+#' @seealso get_tilemap
 get_openstreetmap <- function(bbox=c(left=-95.80204, bottom=29.38048,
                                      right=-94.92313, top=30.14344), 
                               zoom=10, ...) {
@@ -217,6 +218,7 @@ get_openstreetmap <- function(bbox=c(left=-95.80204, bottom=29.38048,
 #' @param zoom Zoom level of map
 #' @param ... Further arguments passed to get_tilemap
 #' @export
+#' @seealso get_tilemap
 get_opentopomap <- function(bbox=c(left=-95.80204, bottom=29.38048,
                                      right=-94.92313, top=30.14344), 
                               zoom=10, ...) {
@@ -236,6 +238,7 @@ get_opentopomap <- function(bbox=c(left=-95.80204, bottom=29.38048,
 #' @param zoom Zoom level of map
 #' @param ... Further arguments passed to get_tilemap
 #' @export
+#' @seealso get_tilemap
 get_wikimedia <- function(bbox=c(left=-95.80204, bottom=29.38048,
                                      right=-94.92313, top=30.14344), 
                               zoom=10, ...) {
@@ -253,6 +256,7 @@ get_wikimedia <- function(bbox=c(left=-95.80204, bottom=29.38048,
 #' @param zoom Zoom level of map
 #' @param ... Further arguments passed to get_tilemap
 #' @export
+#' @seealso get_tilemap
 get_stamentoner <- function(bbox=c(left=-95.80204, bottom=29.38048,
                                      right=-94.92313, top=30.14344), 
                               zoom=10, ...) {
@@ -270,6 +274,7 @@ get_stamentoner <- function(bbox=c(left=-95.80204, bottom=29.38048,
 #' @param zoom Zoom level of map
 #' @param ... Further arguments passed to get_tilemap
 #' @export
+#' @seealso get_tilemap
 get_mapnikgrayscale <- function(bbox=c(left=-95.80204, bottom=29.38048,
                                      right=-94.92313, top=30.14344), 
                               zoom=10, ...) {
@@ -291,6 +296,7 @@ get_mapnikgrayscale <- function(bbox=c(left=-95.80204, bottom=29.38048,
 #' @param zoom Zoom level of map
 #' @param ... Further arguments passed to get_tilemap
 #' @export
+#' @seealso get_tilemap
 get_mapniknolabels <- function(bbox=c(left=-95.80204, bottom=29.38048,
                                      right=-94.92313, top=30.14344), 
                               zoom=10, ...) {
