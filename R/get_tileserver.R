@@ -40,8 +40,11 @@ get_tile <- function(x, y, z, uri_patterns, max_tries=length(uri_patterns)*3,
         stop('Tries exceeded')
       uri <- format_uri(uri_patterns[index], x, y, z)
       response <- file_drawer_get(uri)
-      if (!is.null(response) & !force) 
+      if (!is.null(response) & !force) {
         return(httr::content(response))
+      } else if (messaging) {
+        print('Response taken from cache')
+      }
       response <- httr::GET(uri)
       if (response$status_code != 200L) {
         if (messaging) message(sprintf('Failed GET `%s`', uri))
@@ -68,6 +71,56 @@ get_tile <- function(x, y, z, uri_patterns, max_tries=length(uri_patterns)*3,
     return(tile)
 }
 
+#' Calculate tiles for bbox and zoom
+#'
+#' Calculates tiles to span bbox on level zoom.
+#' If zoom is not provided tries to guess zoom level by computing the tiles
+#' until the min_tiles criterion is met.
+#' min_tiles can be length one or two, defining either total tile count, or
+#' dimensions in x and y
+#' @export
+#' @param bbox A bounding box to calculate tiles for
+#' @param zoom An optional zoom level to calculate tiles for
+#' @param zoom_guess A starting guess for zoom level needed
+#' @param min_tiles A minimum number of tiles needed either in total (length 1)
+#' or x and y (length 2, x and y respectively)
+calculate_tiles <- function(bbox, zoom, zoom_guess=1, min_tiles=c(2, 2), messaging=F) {
+  compute_tile_coords <- function(bbox, zoom) {
+    corners <- expand.grid(
+      lon=c(bbox['left'], bbox['right']),
+      lat=c(bbox['bottom'], bbox['top'])
+    )
+    corners$zoom <- zoom
+    row.names(corners) <- c("lowerleft","lowerright","upperleft","upperright")
+    corner_tiles <- apply(corners, 1, function(v) LonLat2XY(v[1],v[2],v[3]))
+    tile_coords <- expand.grid(
+      x=Reduce(":", sort(unique(as.numeric(sapply(corner_tiles, function(df) df$X))))),
+      y=Reduce(":", sort(unique(as.numeric(sapply(corner_tiles, function(df) df$Y)))))
+    )
+    tile_coords$z <- zoom
+    return(tile_coords)
+  }
+  if (missing(zoom)) {
+    tile_coords <- compute_tile_coords(bbox, zoom_guess)
+    if (length(min_tiles) == 2) {
+      x_tiles <- length(unique(tile_coords$x))
+      y_tiles <- length(unique(tile_coords$y))
+      enough_tiles <- x_tiles >= min_tiles[1] & y_tiles >= min_tiles[2]
+    } else if (length(min_tiles) == 1) {
+      enough_tiles <- nrow(tile_coords) >= min_tiles
+    } else {
+      stop('Invalid min_tiles')
+    }
+    if (!enough_tiles) {
+      if (messaging) message(sprintf('Insufficient tiles (%i), zooming in to %i', nrow(tile_coords), zoom_guess+1))
+      tile_coords <- calculate_tiles(bbox, zoom_guess=zoom_guess+1, min_tiles=min_tiles, messaging=messaging)
+    }
+  } else {
+    tile_coords <- compute_tile_coords(bbox, zoom)
+  }
+  return(tile_coords)
+}
+
 #' Get a map from a tileserver
 #'
 #' Gets a map with boundaries defined by `bbox` from servers defined by
@@ -81,21 +134,16 @@ get_tile <- function(x, y, z, uri_patterns, max_tries=length(uri_patterns)*3,
 #' @param force Ignore cached requests
 #' @param messaging Verbose mode
 #' @return ggmap object containing the map requested.
-get_tilemap <- function(bbox, uri_patterns, zoom, crop=T, force=F, messaging=F, ...) {
-  corners <- expand.grid(
-    lon=c(bbox['left'], bbox['right']),
-    lat=c(bbox['bottom'], bbox['top'])
-  )
-  corners$zoom <- zoom
-  row.names(corners) <- c("lowerleft","lowerright","upperleft","upperright")
-  corner_tiles <- apply(corners, 1, function(v) LonLat2XY(v[1],v[2],v[3]))
-  tile_coords <- expand.grid(
-    x=Reduce(":", sort(unique(as.numeric(sapply(corner_tiles, function(df) df$X))))),
-    y=Reduce(":", sort(unique(as.numeric(sapply(corner_tiles, function(df) df$Y)))))
-  )
-  tile_coords$z <- zoom
+get_tilemap <- function(bbox, uri_patterns, zoom, zoom_guess=T, min_tiles=c(2, 2), crop=T, force=F, messaging=F, ...) {
+  if (zoom_guess) {
+    tile_coords <- calculate_tiles(bbox, zoom_guess=zoom, min_tiles=min_tiles, messaging=messaging)
+    zoom <- unique(tile_coords$z)
+  } else {
+    tile_coords <- calculate_tiles(bbox, zoom)
+  }
   # Get tiles. start_index makes sure we evently use all the different tile
   # servers listed in uri_patterns.
+  if (messaging) message(sprintf('Getting %s tiles', nrow(tile_coords)))
   tiles <- mapply(get_tile, tile_coords$x, tile_coords$y, tile_coords$z,
                   start_index=(0:(nrow(tile_coords)-1)%%length(uri_patterns))+1,
                   MoreArgs=list(uri_patterns=uri_patterns, messaging=messaging, force=force), 

@@ -4,8 +4,8 @@
 \alias{get_tilemap}
 \title{Get a map from a tileserver}
 \usage{
-get_tilemap(bbox, uri_patterns, zoom, crop = T, force = F,
-  messaging = F, ...)
+get_tilemap(bbox, uri_patterns, zoom, zoom_guess = T, min_tiles = c(2,
+  2), crop = T, force = F, messaging = F, ...)
 }
 \arguments{
 \item{bbox}{bounding box for map.}
